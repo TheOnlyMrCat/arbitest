@@ -1,0 +1,6 @@
+[config]
+delegate = true
+
+[[tests]]
+file = "test/test1.toml"
+action = "subtest"

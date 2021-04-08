@@ -1,0 +1,23 @@
+[package]
+name = "arbitest"
+version = "0.1.0"
+description = "Arbitrary test executor"
+license = "MIT"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools::build-utils"]
+repository = "https://github.com/TheOnlyMrCat/arbitest"
+authors = ["TheOnlyMrCat <skylifegame@gmail.com>"]
+edition = "2018"
+
+[profile.release]
+panic = "abort"
+
+[[bin]]
+name = "run"
+
+[dependencies]
+serde = { version = "1.0.124", features = ["derive"] }
+termcolor = "1.1.2"
+toml = "0.5.8"
+
+trace = { version = "0.1", optional = true }

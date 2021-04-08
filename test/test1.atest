@@ -1,0 +1,15 @@
+#sh
+sh $1
+#/
+
+## test_inv.sh
+#sh $1
+#0
+All good here!
+#/
+
+## test_inv2.sh
+sh $1
+#0
+Uh oh...
+#/1
