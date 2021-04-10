@@ -1,0 +1,6 @@
+#cargo
+cargo run -- "test/$1"
+#/
+
+## test1.atest: cargo
+#/

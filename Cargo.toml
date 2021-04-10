@@ -13,11 +13,9 @@ edition = "2018"
 panic = "abort"
 
 [[bin]]
-name = "run"
+name = "atest"
+path = "src/main.rs"
 
 [dependencies]
-serde = { version = "1.0.124", features = ["derive"] }
 termcolor = "1.1.2"
-toml = "0.5.8"
-
-trace = { version = "0.1", optional = true }
+runscript = { version = "1.3.1", path = "../Runscript" }

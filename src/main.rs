@@ -1,47 +1,50 @@
-mod exec;
-mod test;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use exec::{DeError, TestStatus, deserialize_validate_config, run_test};
-use test::{Action, ArbitestConfig};
+use exec::{TestStatus, run_test};
+use runscript::parser::RunscriptSource;
+
+mod atest;
+mod exec;
+mod parser;
+
+use atest::Arbitest;
+use parser::parse_arbitest;
 
 fn main() {
+	let filename = std::env::args().nth(1).unwrap_or("atest".to_owned());
+	let filepath = PathBuf::from(filename.clone()).canonicalize().unwrap();
+
 	let options = Options::default();
-    match deserialize_validate_config("Arbitest.toml", &options, 0) {
+	let source = RunscriptSource {
+		file: filepath.clone(),
+		base: filepath.parent().expect("File to be a file").to_owned(),
+		index: vec![],
+		source: std::fs::read_to_string(&filepath).unwrap(),
+	};
+	
+    match parse_arbitest(source) {
 		Ok(config) => {
-			execute_config(&config, "Arbitest.toml", &options);
-		},
-		Err(DeError::RecursiveLimit) => {
-			eprintln!("atest: reached recursive config limit");
+			execute_config(&config, &filename, &filepath.parent().expect("Checked above"), &options);
 		},
 		Err(_) => todo!(),
 	}
 }
 
-fn execute_config(config: &ArbitestConfig, filename: &str, opts: &Options) -> bool {
-	if !config.config.delegate {
-		println!("Running {} tests in {}:", config.tests.len(), filename);
-	}
+fn execute_config(config: &Arbitest, filename: &str, cwd: &Path, opts: &Options) -> bool {
+	eprintln!("Running {} test{s} in {}:", config.tests.len(), filename, s = if config.tests.len() == 1 { "" } else { "s" });
 
 	let mut pass_count = 0;
 	let mut fail_count = 0;
-	for test in &config.tests {
-		if matches!(&test.action, Action::Command(s) if s == "subtest") {
-			execute_config(test.subtest.as_ref().expect("added in validation").sub_config.as_ref().expect("added in validation"), &test.file, opts);
-		} else {
-			print!("    {}...", &test.file);
-			match run_test(test, &config.commands, PathBuf::from(filename).canonicalize().unwrap().parent().unwrap(), &opts) {
-				TestStatus::Success => { println!("PASS"); pass_count += 1 },
-				TestStatus::Failure => { println!("FAIL"); fail_count += 1 },
-				TestStatus::IOError(e) => panic!("{}", e)
-			}
+	for (name, test) in &config.tests {
+		eprint!("    {}...", &name);
+		match run_test(test, &config.scripts, name, cwd, &opts) {
+			TestStatus::Success => { eprintln!("PASS"); pass_count += 1 },
+			TestStatus::Failure => { eprintln!("FAIL"); fail_count += 1 },
+			TestStatus::ExecError(e, c) => panic!("{:?}", e)
 		}
 	}
-
-	if !config.config.delegate {
-		println!("test_results: {} ({} passed, {} failed)", if fail_count == 0 { "ok" } else { "failed" }, pass_count, fail_count);
-	}
-
+	
+	eprintln!("test_results: {} ({} passed, {} failed)", if fail_count == 0 { "ok" } else { "failed" }, pass_count, fail_count);
 	true
 }
 

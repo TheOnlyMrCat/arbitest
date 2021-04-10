@@ -1,7 +1,9 @@
+$opt default_positionals
+
 #- b!
 cargo build
 #/
 
 #-
-cargo run
+cargo run -- $@
 #/
